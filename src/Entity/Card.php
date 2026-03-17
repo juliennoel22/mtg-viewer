@@ -41,6 +41,9 @@ class Card implements \JsonSerializable
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $setCode = null;
 
+    #[ORM\ManyToOne(targetEntity: Artist::class)]
+    private ?Artist $artist = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -153,6 +156,17 @@ class Card implements \JsonSerializable
 
         return $this;
     }
+    public function getArtist(): ?Artist
+    {
+        return $this->artist;
+    }
+
+    public function setArtist(?Artist $artist): static
+    {
+        $this->artist = $artist;
+
+        return $this;
+    }
 
     public function jsonSerialize(): mixed
     {
@@ -167,6 +181,7 @@ class Card implements \JsonSerializable
             'text' => $this->text,
             'subtype' => $this->subtype,
             'setCode' => $this->setCode,
+            'artist' => $this->artist,
         ];
     }
 }

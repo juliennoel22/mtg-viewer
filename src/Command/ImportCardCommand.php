@@ -26,7 +26,8 @@ class ImportCardCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
-        private array $csvHeader = []
+        private array $csvHeader = [],
+        private array $artistsCache = []
     ) {
         parent::__construct();
     }
@@ -61,13 +62,18 @@ class ImportCardCommand extends Command
             }
             $i++;
 
-            if (!in_array($row['uuid'], $uuidInDatabase)) {
+            $uuid = $row['uuid'];
+            if (!in_array($uuid, $uuidInDatabase)) {
                 $this->addCard($row);
+            } else {
+                // Optionnel: on pourrait mettre à jour l'artiste ici si besoin
+                // Mais pour rester simple et performant, on considère que l'import initial est fait.
             }
 
             if ($i % 2000 === 0) {
                 $this->entityManager->flush();
                 $this->entityManager->clear();
+                $this->artistsCache = []; // Vider le cache pour libérer de la mémoire
                 $progressIndicator->advance();
             }
         }
@@ -110,6 +116,25 @@ class ImportCardCommand extends Command
         $card->setSubtype($row['subtypes']);
         $card->setText($row['text']);
         $card->setType($row['type']);
+
+        // Gestion de l'artiste
+        $artistName = $row['artist'] ?? null;
+        $artistId = $row['artistIds'] ?? null;
+
+        if ($artistName && $artistId) {
+            if (!isset($this->artistsCache[$artistId])) {
+                $artist = $this->entityManager->getRepository(Artist::class)->findOneBy(['artistExternalId' => $artistId]);
+                if (!$artist) {
+                    $artist = new Artist();
+                    $artist->setName($artistName);
+                    $artist->setArtistExternalId($artistId);
+                    $this->entityManager->persist($artist);
+                }
+                $this->artistsCache[$artistId] = $artist;
+            }
+            $card->setArtist($this->artistsCache[$artistId]);
+        }
+
         $this->entityManager->persist($card);
     }
 }

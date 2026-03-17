@@ -32,4 +32,41 @@ class CardRepository extends ServiceEntityRepository
         ;
         return array_column($result, 'uuid');
     }
+
+    /**
+     * @return string[]
+     */
+    public function findAllUniqueSetCodes(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->select('DISTINCT c.setCode')
+            ->where('c.setCode IS NOT NULL')
+            ->orderBy('c.setCode', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
+    /**
+     * @return Card[]
+     */
+    public function searchByName(string $query, ?string $setCode = null, ?int $artistId = null, int $limit = 20): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->where('c.name LIKE :query')
+            ->setParameter('query', '%' . $query . '%');
+
+        if ($setCode) {
+            $qb->andWhere('c.setCode = :set')
+               ->setParameter('set', $setCode);
+        }
+
+        if ($artistId) {
+            $qb->andWhere('c.artist = :artistId')
+               ->setParameter('artistId', $artistId);
+        }
+
+        return $qb->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

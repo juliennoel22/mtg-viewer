@@ -30,6 +30,7 @@ onMounted(() => {
             <CardProperty name="Type" :value="card.type" />
             <CardProperty name="Rareté" :value="card.rarity" />
             <CardProperty name="Édition" :value="card.setCode" />
+            <CardProperty v-if="card.artist" name="Artiste" :value="card.artist.name" />
         </div>
     </div>
     <div>
