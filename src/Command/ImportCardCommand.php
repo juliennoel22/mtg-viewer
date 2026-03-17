@@ -36,7 +36,7 @@ class ImportCardCommand extends Command
         ini_set('memory_limit', '2G');
         // On récupère le temps actuel
         $io = new SymfonyStyle($input, $output);
-        $filepath = __DIR__ . '/../../data/cards.csv';
+        $filepath = __DIR__ . '/../../data/AllPrintingsCSVFiles/cards.csv';
         $handle = fopen($filepath, 'r');
 
         // On récupère le temps actuel
@@ -56,6 +56,9 @@ class ImportCardCommand extends Command
         $progressIndicator->start('Importing cards...');
 
         while (($row = $this->readCSV($handle)) !== false) {
+            if (empty($row)) {
+                continue;
+            }
             $i++;
 
             if (!in_array($row['uuid'], $uuidInDatabase)) {
@@ -86,6 +89,9 @@ class ImportCardCommand extends Command
         $row = fgetcsv($handle);
         if ($row === false) {
             return false;
+        }
+        if (count($this->csvHeader) !== count($row)) {
+            return [];
         }
         return array_combine($this->csvHeader, $row);
     }
