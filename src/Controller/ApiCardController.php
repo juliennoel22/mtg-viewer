@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 #[Route('/api/card', name: 'api_card_')]
 #[OA\Tag(name: 'Card', description: 'Routes for all about cards')]
@@ -21,11 +22,18 @@ class ApiCardController extends AbstractController
     ) {
     }
     #[Route('/all', name: 'List all cards', methods: ['GET'])]
-    #[OA\Put(description: 'Return all cards in the database')]
-    #[OA\Response(response: 200, description: 'List all cards')]
-    public function cardAll(): Response
+    public function cardAll(Request $request): Response
     {
-        $cards = $this->entityManager->getRepository(Card::class)->findAll();
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $cards = $this->entityManager->getRepository(Card::class)->findBy(
+            [], 
+            ['name' => 'ASC'], 
+            $limit, 
+            ($page - 1) * $limit
+        );
+
         return $this->json($cards);
     }
 
